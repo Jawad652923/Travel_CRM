@@ -2,6 +2,9 @@ from django.db import models
 from accounts.models import CustomUser
 
 class Customer(models.Model):
+    """
+    Used built-in django model for customer also link relationship with CustomUser Model.
+    """
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone_no = models.CharField(max_length=15)
