@@ -8,14 +8,15 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
     Used Django custom user model and for adding a 'role' field to define user roles
     such as 'admin' and 'sales_agent'.
     """
-    ROLE_CHOICE ={
-        ('admin','Admin'),
-        ('sales_agent','Sales Agent'),
-    }
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('sales_agent', 'Sales Agent'),
+    ]
+    
     
     username = models.CharField(max_length=100,unique=True)
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=20,choices=ROLE_CHOICE)
+    role = models.CharField(max_length=20,choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
     

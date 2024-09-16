@@ -19,27 +19,26 @@ class CustomTokenObtainView(TokenObtainPairView):
         refresh token if the credentials are valid. Returns an error response 
         if the credentials are invalid.
         """
-        response = super().post(request,*args,**kwargs)
-        if response.status_code==200:
+        try:
+            response = super().post(request, *args, **kwargs)
             return Response({
-                "status":"Success",
-                "code":response.status_code,
-                "message":"token Created successfully",
-                "timestamp":timezone.now(),
-                "data":{
-                    "access":response.data['access'],
-                    "refresh":response.data['refresh'],
+                "status": "success",
+                "code": response.status_code,
+                "message": "Token created successfully.",
+                "timestamp": timezone.now(),
+                "data": {
+                    "access": response.data['access'],
+                    "refresh": response.data['refresh']
                 }
-            },status=status.HTTP_200_OK)
-
-        else:
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
             return Response({
-                "status":"error",
-                "code":response.status_code,
-                "message":"Invalid Credentials",
-                "timestamp":timezone.now(), 
-                "data":None
-            },status=response.status_code)
+                "status": "error",
+                "code": 400,
+                "message": "Invalid credentials.",
+                "timestamp": timezone.now(),
+                "data": None
+            }, status=status.HTTP_400_BAD_REQUEST)
             
             
 class CustomTokenRefreshView(TokenRefreshView):
@@ -58,28 +57,28 @@ class CustomTokenRefreshView(TokenRefreshView):
         new access token if the refresh is successful. Returns an error response 
         if the refresh fails.
         """
-        response = super().post(request,*args,**kwargs)
-        if response.status_code==200:
+        try:
+            response = super().post(request, *args, **kwargs)
             return Response({
-                "status":"Success",
-                "code":response.status_code,
-                "message":"token Refreshed successfully",
-                "timestamp":timezone.now(),
-                "data":{
-                    "access":response.data['access'],
+                "status": "success",
+                "code": response.status_code,
+                "message": "Token refreshed successfully.",
+                "timestamp": timezone.now(),
+                "data": {
+                    "access": response.data['access'],
                 }
-            },status=status.HTTP_200_OK)
-
-        else:
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
             return Response({
-                "status":"error",
-                "code":response.status_code,
-                "message":"Token Refreshed Failed",
-                "timestamp":timezone.now(), 
-                "data":None
-            },status=response.status_code)
+                "status": "error",
+                "code": 401,
+                "message": "Token refresh failed.",
+                "timestamp": timezone.now(),
+                "data": None
+            }, status=status.HTTP_401_UNAUTHORIZED)
             
-
+            
+            
 class CustomTokenVerifyView(TokenVerifyView):
     """
     Custom view to verify JWT token with a standardized response format.
@@ -95,22 +94,21 @@ class CustomTokenVerifyView(TokenVerifyView):
         Returns a custom response with the status, code, message and timestamp if the token is valid. Returns an error response 
         if the token is expired or invalid.
         """
-        response = super().post(request,*args,**kwargs)
-        if response.status_code==200:
+        try:
+            response = super().post(request, *args, **kwargs)
             return Response({
-                "status":"Success",
-                "code":response.status_code,
-                "message":"Token is valid",
-                "timestamp":timezone.now(),
-                "data":None
-            },status=status.HTTP_200_OK)
-
-        else:
+                "status": "success",
+                "code": 200,
+                "message": "Token is valid.",
+                "timestamp": timezone.now(),
+                "data": None
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
             return Response({
-                "status":"error",
-                "code":response.status_code,
-                "message":"Token Refreshed Failed",
-                "timestamp":timezone.now(), 
-                "data":None
-            },status=response.status_code)            
+                "status": "error",
+                "code": 401,
+                "message": "Token is invalid or expired.",
+                "timestamp": timezone.now(),
+                "data": None
+            }, status=status.HTTP_401_UNAUTHORIZED)         
             
