@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import Customer
 
 class CustomerSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Customer fields and add assgined_sale_agent field on read only 
+    to automatically add when they create customer.
+    """
 
     class Meta:
         model = Customer
