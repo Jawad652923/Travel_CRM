@@ -8,16 +8,25 @@ from .utils import custom_response
 
 class CustomerViewSet(viewsets.ModelViewSet):
     """
-    CustomerViewSet to manage customer data. 
-    Admins have full access, while sales agents can only view/update their assigned customers.
-    """    
+    ViewSet for managing Customer data.
+
+    Admins have full access to all customer data, while sales agents have restricted access:
+    - Sales agents can only view and manage customers they are assigned to.
+    - Sales agents cannot delete customers.
+    """
     serializer_class = CustomerSerializer
     permission_classes = [IsAdmin | IsSalesAgent]
     queryset = Customer.objects.all()
 
     def get_queryset(self):
         """
-        Admins can access all customers. Sales agents can only access their assigned customers.
+        Return the queryset for listing or retrieving customer data.
+
+        Admins can access all customer records.
+        Sales agents can only access customer records assigned to them.
+
+        Returns:
+            QuerySet: A queryset of customers based on the user's role.
         """        
         user = self.request.user
         if user.role == 'admin':
@@ -29,6 +38,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """
         Retrieve a list of customers.
+
+        Admins can retrieve all customer records.
+        Sales agents can retrieve only their assigned customers.
+
+        Returns:
+            Response: A response containing the list of customers or a message if no customers are found.
         """
         queryset = self.get_queryset()
         if queryset.exists():
@@ -41,35 +56,32 @@ class CustomerViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = custom_response(
-                status_code=200,
+                status_code=404,
                 message='No customers found.',
                 data=[]
             )
-            return Response(response_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve a specific customer.
+
+        Admins can view any customer record.
+        Sales agents can view only customers assigned to them.
+
+        Returns:
+            Response: A response containing the customer details or a message if the customer is not found.
         """
         try:
             instance = self.get_object()
         except:
             response_data = custom_response(
-                status_code=200,
-                message='No customer found.',
-                data=None
+                status_code=404,
+                message='No customers found.',
+                data=[]
             )
-            return Response(response_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-        user = self.request.user
-        if user.role == 'sales_agent' and instance.assigned_sales_agent != user:
-            response_data = custom_response(
-                status_code=401,
-                message='You are not authorized to do this action.',
-                data=None
-            )
-            return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
-        
         serializer = self.get_serializer(instance)
         response_data = custom_response(
             status_code=200,
@@ -80,7 +92,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Save the customer with the assigned_sales_agent field set.
+        Save a new customer instance.
+
+        Sets the `assigned_sales_agent` field to the current user.
+
+        Args:
+            serializer (CustomerSerializer): The serializer instance used to validate and save the customer data.
         """
         user = self.request.user
         serializer.save(assigned_sales_agent=user)
@@ -88,6 +105,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """
         Handle the creation of a new customer.
+
+        Validates the input data and saves a new customer record.
+
+        Returns:
+            Response: A response indicating the result of the creation attempt, including success or error details.
         """
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -109,7 +131,16 @@ class CustomerViewSet(viewsets.ModelViewSet):
         
     def update(self, request, *args, **kwargs):
         """
-        Update a customer's data. Admins can update any customer, while sales agents can only update their assigned customers.
+        Update an existing customer record.
+
+        Admins can update any customer record.
+        Sales agents can only update customers assigned to them.
+
+        Args:
+            request (Request): The request object containing the update data.
+
+        Returns:
+            Response: A response indicating the result of the update attempt, including success or error details.
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -141,7 +172,16 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         """
-        Partially update a customer's data. Admins can update any customer, while sales agents can only update their assigned customers.
+        Partially update an existing customer record.
+
+        Admins can update any customer record.
+        Sales agents can only partially update customers assigned to them.
+
+        Args:
+            request (Request): The request object containing the partial update data.
+
+        Returns:
+            Response: A response indicating the result of the partial update attempt, including success or error details.
         """        
         instance = self.get_object()
         user = self.request.user
@@ -173,8 +213,16 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """
-        Only the admin can delete a customer. Sales agents are not allowed to delete customers.
-        """        
+        Delete a customer record.
+
+        Only admins can delete customer records. Sales agents are not allowed to delete customers.
+
+        Args:
+            request (Request): The request object for the delete operation.
+
+        Returns:
+            Response: A response indicating the result of the delete attempt, including success or error details.
+        """
         instance = self.get_object()
         user = self.request.user
         if user.role == 'admin':
