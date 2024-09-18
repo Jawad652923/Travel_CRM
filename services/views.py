@@ -7,16 +7,33 @@ from .utils import custom_response
 
 class ServiceViewSet(viewsets.ModelViewSet):
     """
-    ServiceViewSet to manage service data.
-    Both admins and sales agents have full CRUD access.
-    """    
+    ViewSet for managing service data.
+
+    This viewset provides CRUD operations for `Service` instances. 
+    Both admins and sales agents have full access to create, retrieve, update, and delete services.
+
+    Attributes:
+        serializer_class (ServiceSerializer): The serializer class used for service data.
+        permission_classes (list): The list of permissions classes applied to this viewset.
+        queryset (QuerySet): The queryset of `Service` instances.
+
+    Methods:
+        get_queryset():Returns a queryset of services based on user role. Admins have access to all services, while sales agents can access all services.
+        list(request, *args, **kwargs): Retrieves a list of all services accessible by the user.
+        retrieve(request, *args, **kwargs): Retrieves a specific service by ID.
+        create(request, *args, **kwargs): Creates a new service with the provided data.
+        update(request, *args, **kwargs): Updates an existing service with the provided data.
+        destroy(request, *args, **kwargs): Deletes a service by ID.
+    """
+    
     serializer_class = ServiceSerializer
     permission_classes = [IsAdminOrSalesAgent]
     queryset = Service.objects.all()
     
     def get_queryset(self):
         """
-        Admins can access all services. Sales agents can access services linked to customers assigned to them through inquiries.
+        Returns a queryset of services based on user role.
+        Admins have access to all services, while sales agents have access to all services.
         """
         user = self.request.user
         if user.role == 'admin' or user.role == 'sales_agent':
@@ -26,6 +43,9 @@ class ServiceViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """
         Retrieve a list of services.
+
+        Returns:
+            Response: A response object containing the list of services or a message indicating no services found.
         """
         queryset = self.get_queryset()
         if queryset.exists():
@@ -46,7 +66,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """
-        Retrieve a specific service.
+        Retrieve a specific service by ID.
+
+        Returns:
+            Response: A response object containing the service data or a message indicating service not found.
         """
         try:
             instance = self.get_object()
@@ -68,7 +91,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """
-        Allow sales agents and admins to create a new service.
+        Create a new service with the provided data.
+
+        Returns:
+            Response: A response object containing the created service data or a message indicating invalid fields.
         """
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -89,7 +115,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """
-        Allow sales agents and admins to update a service.
+        Update an existing service with the provided data.
+
+        Returns:
+            Response: A response object containing the updated service data or a message indicating invalid data.
         """
         partial = kwargs.pop('partial', False)
         try:
@@ -122,7 +151,10 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """
-        Allow both sales agents and admins to delete a service.
+        Delete a service by ID.
+
+        Returns:
+            Response: A response object indicating successful deletion or a message indicating service not found.
         """
         try:
             instance = self.get_object()
