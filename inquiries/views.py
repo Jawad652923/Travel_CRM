@@ -7,16 +7,39 @@ from .utils import custom_response
 
 class InquiryViewSet(viewsets.ModelViewSet):
     """
-    InquiryViewSet to manage inquiry data. 
-    Admins have full access, while sales agents can only view/update inquiries they are assigned to.
-    """    
+    A ViewSet for managing Inquiry data.
+
+    This viewset provides actions to list, retrieve, create, update, partially update, and delete inquiries.
+    - Admins have full access to all inquiries.
+    - Sales agents can only view and update inquiries they are assigned to.
+    - Sales agents cannot delete inquiries.
+
+    Attributes:
+        serializer_class (InquirySerializer): The serializer class used for converting Inquiry instances to and from JSON.
+        permission_classes (list): List of permission classes used to restrict access to the viewset's actions.
+        queryset (QuerySet): The base queryset for the viewset.
+
+    Methods:
+        get_queryset(): Returns the queryset based on the user's role. Admins see all inquiries, sales agents see only their assigned inquiries.
+        list(request, *args, **kwargs): Retrieve a list of inquiries, either all or filtered based on the user's role.
+        retrieve(request, *args, **kwargs): Retrieve a specific inquiry, with access control based on the user's role.
+        create(request, *args, **kwargs): Create a new inquiry. Sales agents are assigned as the creator.
+        update(request, *args, **kwargs): Update an existing inquiry. Admins can update any inquiry; sales agents can only update their assigned inquiries.
+        partial_update(request, *args, **kwargs): Partially update an existing inquiry.
+        destroy(request, *args, **kwargs): Delete an inquiry. Admins have full delete permissions; sales agents cannot delete inquiries.
+    """
     serializer_class = InquirySerializer
     permission_classes = [IsAdminOrSalesAgent]
     queryset = Inquiries.objects.all()
 
     def get_queryset(self):
         """
-        Admins can access all inquiries. Sales agents can only access inquiries they are assigned to.
+        Returns the queryset of inquiries based on the user's role.
+
+        Admins can view all inquiries. Sales agents can only view inquiries assigned to them.
+
+        Returns:
+            QuerySet: The filtered queryset of inquiries.
         """        
         user = self.request.user
         if user.role == 'admin':
@@ -28,6 +51,14 @@ class InquiryViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """
         Retrieve a list of inquiries.
+
+        Retrieves and returns a list of inquiries based on the user's role.
+
+        Args:
+            request (Request): The HTTP request object.
+
+        Returns:
+            Response: The HTTP response object containing the list of inquiries or an appropriate message.
         """
         queryset = self.get_queryset()
         if queryset.exists():
@@ -49,6 +80,14 @@ class InquiryViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve a specific inquiry.
+
+        Retrieves and returns the details of a specific inquiry based on the user's role.
+
+        Args:
+            request (Request): The HTTP request object.
+
+        Returns:
+            Response: The HTTP response object containing the inquiry details or an error message.
         """
         try:
             instance = self.get_object()
@@ -60,14 +99,6 @@ class InquiryViewSet(viewsets.ModelViewSet):
             )
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-        user = self.request.user
-        if user.role == 'sales_agent' and instance.assigned_sales_agent != user:
-            response_data = custom_response(
-                status_code=403,
-                message='You are not authorized to access this inquiry.',
-                data=None
-            )
-            return Response(response_data, status=status.HTTP_403_FORBIDDEN)
         
         serializer = self.get_serializer(instance)
         response_data = custom_response(
@@ -87,6 +118,14 @@ class InquiryViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """
         Handle the creation of a new inquiry.
+
+        Handles the creation of a new inquiry, assigning the current user as the sales agent if applicable.
+
+        Args:
+            request (Request): The HTTP request object containing the data for the new inquiry.
+
+        Returns:
+            Response: The HTTP response object containing the created inquiry data or an error message.
         """
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -107,7 +146,15 @@ class InquiryViewSet(viewsets.ModelViewSet):
         
     def update(self, request, *args, **kwargs):
         """
-        Update an inquiry. Admins can update any inquiry, while sales agents can only update inquiries they are assigned to.
+        Update an existing inquiry.
+
+        Updates the details of an existing inquiry based on the provided data.
+
+        Args:
+            request (Request): The HTTP request object containing the updated data for the inquiry.
+
+        Returns:
+            Response: The HTTP response object containing the updated inquiry data or an error message.
         """
         partial = kwargs.pop('partial', False)
         try:
@@ -138,7 +185,15 @@ class InquiryViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         """
-        Partially update an inquiry.
+        Partially update an existing inquiry.
+
+        Partially updates the details of an existing inquiry based on the provided data.
+
+        Args:
+            request (Request): The HTTP request object containing the partial data for the inquiry.
+
+        Returns:
+            Response: The HTTP response object containing the partially updated inquiry data or an error message.
         """
         try:
             instance = self.get_object()
@@ -169,9 +224,16 @@ class InquiryViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """
-        Both admin and sales agent  can delete a inquiries.
+        Delete an inquiry.
+
+        Admins can delete any inquiry. Sales agents cannot delete inquiries.
         
-        """        
+        Args:
+            request (Request): The HTTP request object.
+
+        Returns:
+            Response: The HTTP response object confirming the deletion or an error message.
+        """
         try:
             instance = self.get_object()
         except:
@@ -181,6 +243,16 @@ class InquiryViewSet(viewsets.ModelViewSet):
                 data=None
             )
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        
+        user = self.request.user
+        if user.role != 'admin':
+            response_data = custom_response(
+                status_code=403,
+                message='You are not authorized to delete this inquiry.',
+                data=None
+            )
+            return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+        
         instance.delete()
         response_data = custom_response(
             status_code=200,

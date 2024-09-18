@@ -4,6 +4,20 @@ from customer.models import Customer
 from services.models import Service
 
 class Inquiries(models.Model):
+    """
+    Represents an inquiry made by a customer for services.
+
+    Attributes:
+        STATUS_CHOICES (list): A list of tuples representing the possible statuses for an inquiry.
+        details (TextField): A detailed description of the inquiry.
+        status (CharField): The current status of the inquiry, chosen from STATUS_CHOICES. Defaults to 'Open'.
+        customer (ForeignKey): A foreign key linking to the Customer model, representing the customer who made the inquiry.
+        assigned_sales_agent (ForeignKey): A foreign key linking to the user model, representing the sales agent assigned to the inquiry.
+        services (ManyToManyField): A many-to-many relationship linking to the Service model, representing the services related to the inquiry.
+
+    Methods:
+        __str__(): Returns a string representation of the inquiry, including its ID and status.
+    """
     STATUS_CHOICES =[
         ('Open','open'),
         ('In Progress','in progress'),
@@ -17,4 +31,10 @@ class Inquiries(models.Model):
     services = models.ManyToManyField(Service,related_name='inquiries')
     
     def __str__(self):
+        """
+        Return the string representation of the inquiry status.
+
+        Returns:
+            str: Status and ID of the inquiry.
+        """
         return f'Inquiry{self.id} - {self.status}'
