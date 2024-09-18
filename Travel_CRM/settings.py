@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'customer',
     'inquiries',
     'services',
+    'proposal',
     
 ]
 
