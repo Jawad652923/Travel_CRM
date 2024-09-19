@@ -110,7 +110,14 @@ WSGI_APPLICATION = 'Travel_CRM.wsgi.application'
 # }
 
 DATABASES = {
-    "default":dj_database_url.parse(os.environ.get("DATABASE_URL"))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'BVsVoKyZhDwDPKmZdkzcQNsmBnAiWlxG',
+        'HOST': 'junction.proxy.rlwy.net',
+        'PORT': '45540',
+    }
 }
 
 
