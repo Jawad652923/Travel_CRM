@@ -9,12 +9,11 @@ class SalesAgentCreateView(generics.CreateAPIView):
     this action only perform by admin only.
     """
     serializer_class = SalesAgentSerializer
-
+    permission_classes = [IsAdmin]
     def post(self, request, *args, **kwargs):
         
         serializer = self.get_serializer(data=request.data)
         try:
-            permission_classes = [IsAdmin]
             serializer.is_valid(raise_exception=True)
             serializer.save()
             
